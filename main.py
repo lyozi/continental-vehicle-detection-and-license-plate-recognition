@@ -1,11 +1,14 @@
-import cv2
-import torch
 from ultralytics import YOLO
 
 from add_missing_data import add_missing_data
 from util import get_car_for_license_plate, read_license_plate, write_csv
 from sort.sort import *
 from visualize import *
+
+import time
+from win10toast import ToastNotifier
+
+start_time = time.time()  # Start timer right after imports
 
 endResults = {}
 
@@ -22,7 +25,7 @@ if not cap.isOpened():
 else:
     print("Siker: A videó betöltődött!")
 
-vehicles = [2, 3, 5, 7]
+vehicles = [2, 3, 4, 6, 8]
 
 # ONLY FOR TESTING PURPOSES
 frame_nmr = -1
@@ -98,3 +101,12 @@ write_csv(endResults, './test.csv')
 
 add_missing_data()
 visualize()
+
+end_time = time.time()
+duration = (end_time - start_time) / 60
+message = f"A futás időtartama: {duration:.2f} perc"
+
+print(f"✅ {message}")
+
+toaster = ToastNotifier()
+toaster.show_toast("YOLO Processing Done ✅", message)

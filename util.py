@@ -5,7 +5,7 @@ import numpy as np
 
 from ultralytics import YOLO
 
-ocr_model = YOLO('ocr_medium.pt')
+ocr_model = YOLO('ocr_xl.pt')
 
 # Initialize the OCR reader
 reader = easyocr.Reader(['en'], gpu=False)
