@@ -1,5 +1,11 @@
 import string
 import easyocr
+import cv2
+import numpy as np
+
+from ultralytics import YOLO
+
+ocr_model = YOLO('ocr_medium.pt')
 
 # Initialize the OCR reader
 reader = easyocr.Reader(['en'], gpu=False)
@@ -28,7 +34,6 @@ def write_csv(results, output_path):
 
         for frame_nmr in results.keys():
             for car_id in results[frame_nmr].keys():
-                print(results[frame_nmr][car_id])
                 if 'car' in results[frame_nmr][car_id].keys() and \
                         'license_plate' in results[frame_nmr][car_id].keys() and \
                         'text' in results[frame_nmr][car_id]['license_plate'].keys():
@@ -81,13 +86,31 @@ def format_license_plate_text(text):
 
 
 def read_license_plate(license_plate_crop):
-    detections = reader.readtext(license_plate_crop)
+    results = ocr_model(license_plate_crop)[0]
 
-    for bbox, text, score in detections:
-        cleaned_text = text.upper().replace(' ', '')
+    class_map = {
+        0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9',
+        10: 'A', 11: 'B', 12: 'C', 13: 'D', 14: 'E', 15: 'F', 16: 'G', 17: 'H',
+        18: 'I', 19: 'J', 20: 'K', 21: 'L', 22: 'M', 23: 'N', 24: 'O', 25: 'P',
+        26: 'Q', 27: 'R', 28: 'S', 29: 'T', 30: 'U', 31: 'V', 32: 'W', 33: 'X',
+        34: 'Y', 35: 'Z'
+    }
 
-        if license_complies_format(cleaned_text):
-            return format_license_plate_text(cleaned_text), score
+    characters = []
+
+    for box in results.boxes.data.tolist():
+        x1, y1, x2, y2, score, class_id = box
+        if int(class_id) in class_map:
+            char = class_map[int(class_id)]
+            characters.append((x1, char, score))  # Use x1 for left-to-right sorting
+
+    # Sort characters left to right
+    characters = sorted(characters, key=lambda x: x[0])
+    license_text = ''.join([char for _, char, _ in characters])
+
+    if license_complies_format(license_text):
+        avg_score = np.mean([score for _, _, score in characters])
+        return format_license_plate_text(license_text), avg_score
 
     return None, None
 

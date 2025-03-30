@@ -2,8 +2,10 @@ import cv2
 import torch
 from ultralytics import YOLO
 
+from add_missing_data import add_missing_data
 from util import get_car_for_license_plate, read_license_plate, write_csv
 from sort.sort import *
+from visualize import *
 
 endResults = {}
 
@@ -68,7 +70,7 @@ while cap.isOpened():
             # cv2.imshow('THRESH CROP', license_lplate_box_thresholded)
 
             # OCR alkalmazasa a rendszamtabla leolvasasahoz
-            license_plate_text, license_plate_text_score = read_license_plate(license_plate_box_thresholded)
+            license_plate_text, license_plate_text_score = read_license_plate(license_plate_box)
 
             if license_plate_text is not None:
                 endResults[frame_nmr][car_id] = {
@@ -93,3 +95,6 @@ while cap.isOpened():
         break
 
 write_csv(endResults, './test.csv')
+
+add_missing_data()
+visualize()
